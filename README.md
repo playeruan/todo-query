@@ -1,5 +1,5 @@
-# tq
-tq, or todo-query, is a simple C program that prints all todos present in the specified file or directory (in the second case, it will check in all the non-hidden files recursively).
+# todo-query
+todo-query is a simple C program that lists all TODOs in a file or directory.
 
-### usage
+## usage
 `tq <file | dir>`
