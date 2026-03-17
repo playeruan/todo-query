@@ -1,5 +1,3 @@
-#include <asm-generic/errno-base.h>
-#include <asm-generic/errno.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -7,29 +5,35 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-const char * restrict usagefmt = "usage: %s <file | dir>\n";
+const char * restrict usagefmt = "usage: %s <file | dir> [-s<separator>]\n";
+const char *separator = "|";
 
 void tqfile(FILE *f, const char *filename) {
   char c;
-  unsigned long line = 1;
-  char in_string = 0;
+  uint64_t line = 1;
+  bool in_string = false;
   while ((c = getc(f)) != EOF) {
     if (c == 'T' &&
         getc(f) == 'O' &&
         getc(f) == 'D' &&
         getc(f) == 'O' ) {
-      printf("%s:%zu \"", filename, line);
-      if ((c = getc(f)) != ':' && !isspace(c)) {
-        putchar(c);
-      }
-      while (isspace((c = getc(f))));
+      printf("%s:%zu %s ", filename, line, separator);
+      if ((c = getc(f)) == ':') c = getc(f);
+      while (isspace(c)) c = getc(f);
       do {
-        putchar(c);
-      } while ((c = getc(f)) != EOF &&
-                c != '\n' &&
-                (!in_string || c != '"'));
-      printf("\"\n");
+        putchar(c); 
+        if (in_string && c == '\n') {
+          putchar('\t');
+        }
+      } while (
+          (c = getc(f)) != EOF &&
+          (in_string || c != '\n') &&
+          (!in_string || c != '"')
+      );
+      putchar('\n');
     }
     if (c == '"') in_string = !in_string;
     if (c == '\n') line++;
@@ -78,9 +82,16 @@ int main(int argc, char *argv[]) {
   
   //TODO: Hello, TODO!
   
-  if (argc != 2 || strcmp(argv[1], "--help") == 0) {
+  if (argc < 2 || strcmp(argv[1], "--help") == 0) {
     printf(usagefmt, argv[0]);
     return 1;
+  }
+
+  for (int i = 2; i < argc; i++) {
+    // check for flags
+    if (strncmp(argv[i], "-s", 1) == 0) {
+      separator = argv[i] + 2;
+    }
   }
 
   struct stat s;
