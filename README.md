@@ -17,3 +17,9 @@ By default, the separator is set to "|" and the output will look like
 ```
 main.c:83 | Hello, TODO! 
 ```
+
+---
+
+`-a` to query all files. by default, todo-query excludes these file types:
+- .tres
+- .tscn

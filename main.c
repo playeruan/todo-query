@@ -8,10 +8,38 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-const char * restrict usagefmt = "usage: %s <file | dir> [-s<separator>]\n";
+const char * restrict usagefmt = "usage: %s <file | dir> [-s<separator>] [-a]\n";
 const char *separator = "|";
 
+// exclued file extentions.
+// feel free to contribute with more extentions that
+// should generally be excluded from the todo query
+const char *excluded_file_types[] = {
+  "tres", // Godot Tree Resource
+  "tscn", // Godot Tree Scene
+};
+
+bool query_all = false; // query excluded_file_types as well?
+
+bool strends(const char *s, const char *with) {
+  size_t length_s = strlen(s);
+  size_t length_with = strlen(with);
+
+  if (length_s < length_with) { return false; }
+
+  const char *suffix = s + length_s - length_with;
+
+  return (strcmp(suffix, with) == 0) ? true : false;
+}
+
 void tqfile(FILE *f, const char *filename) {
+  if (!query_all) {
+    for (size_t i = 0; i < sizeof(excluded_file_types)/sizeof(*excluded_file_types); i++) {
+      if (strends(filename, excluded_file_types[i])) {
+        return;
+      }
+    }
+  }
   char c;
   uint64_t line = 1;
   bool in_string = false;
@@ -89,8 +117,15 @@ int main(int argc, char *argv[]) {
 
   for (int i = 2; i < argc; i++) {
     // check for flags
-    if (strncmp(argv[i], "-s", 1) == 0) {
+    if (strncmp(argv[i], "-s", 2) == 0) {
       separator = argv[i] + 2;
+    }
+    else if (strcmp(argv[i], "-a") == 0) {
+      query_all = true;
+    }
+    else {
+      printf(usagefmt, argv[0]);
+      return 1;
     }
   }
 
